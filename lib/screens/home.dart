@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/user_card.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -38,11 +40,11 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () {},
         ),
       ),
-      body: Center(
-        child: Text(
-          'Hello',
-          style: TextStyle(fontSize: height * 0.03),
-        ),
+      body: ListView.builder(
+        itemCount: 3,
+        itemBuilder: (context, index) {
+          return UserCard();
+        },
       ),
     );
   }

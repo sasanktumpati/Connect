@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: defMode,
       title: ' Connect ',
-      home: SplashScreen(),
+      home: HomeScreen(),
     );
   }
 }
