@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CustomDialogs {
-  void alertDialog(BuildContext context, String title) {
+  static alertDialog(BuildContext context, String title) {
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
 
@@ -47,7 +47,14 @@ class CustomDialogs {
     );
   }
 
-  void showCircularProgressDialog(BuildContext context) {
+  static void showSnackbar(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.blue.withOpacity(.8),
+        behavior: SnackBarBehavior.floating));
+  }
+
+  static showCircularProgressDialog(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
 

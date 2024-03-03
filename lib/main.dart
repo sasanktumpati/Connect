@@ -4,7 +4,7 @@ import 'package:connect/firebase_options.dart';
 import 'package:connect/screens/home.dart';
 import 'package:connect/screens/login.dart';
 import 'package:connect/screens/splash.dart';
-import 'package:connect/themedata/themedata.dart';
+import 'package:connect/helpers/themedata.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: defMode,
       title: ' Connect ',
-      home: HomeScreen(),
+      home: SplashScreen(),
     );
   }
 }

@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:connect/screens/dialogs.dart';
+import 'package:connect/helpers/dialogs.dart';
 import 'package:connect/screens/home.dart';
-import 'package:connect/services/networkhandler.dart';
+import 'package:connect/services/connectivity_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,16 +21,16 @@ class _LoginScreenState extends State<LoginScreen> {
   ConnectivityController connectivityController = ConnectivityController();
   @override
   void initState() {
-    connectivityController.init();
     super.initState();
+    ConnectivityController.init();
   }
 
-  bool get _connected => connectivityController.isConnected.value;
+  bool get _connected => ConnectivityController.isConnectedToInternet();
 
   _loginbuttonClick() {
     CustomDialogs customDialogs = CustomDialogs();
 
-    customDialogs.showCircularProgressDialog(context);
+    CustomDialogs.showCircularProgressDialog(context);
 
     if (_connected) {
       signInWithGoogle().then((User) {
@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     } else {
       Navigator.pop(context);
-      customDialogs.alertDialog(context, 'Error');
+      CustomDialogs.alertDialog(context, 'Error');
     }
   }
 

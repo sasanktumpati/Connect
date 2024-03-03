@@ -1,14 +1,25 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:connect/api/api.dart';
+import 'package:connect/helpers/dateutils.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
+import '../models/chat_user.dart';
+import '../models/message.dart';
+import '../screens/chat_screen.dart';
 
 class UserCard extends StatefulWidget {
-  const UserCard({super.key});
+  UserCard({super.key, required ChatUser user});
+
+  late final ChatUser user;
 
   @override
   State<UserCard> createState() => _UserCardState();
 }
 
 class _UserCardState extends State<UserCard> {
+  Message? _message;
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
@@ -19,71 +30,64 @@ class _UserCardState extends State<UserCard> {
     final secColor = Theme.of(context).colorScheme.secondary;
 
     return Card(
-      elevation: 2,
-      shadowColor: Colors.black,
-      color: const Color.fromRGBO(10, 38, 61, 0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Column(
-                  children: [Icon(Icons.person)],
-                ),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                          text: "Course Name\n",
-                          style: TextStyle(
-                              color: primaryColor,
-                              fontSize: height * 0.02,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: RichText(
-                    textAlign: TextAlign.left,
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: "Year    ",
-                          style: TextStyle(
-                              color: primaryColor,
-                              fontSize: height * 0.02,
-                              fontWeight: FontWeight.bold),
-                        )
-                      ],
+      margin: EdgeInsets.symmetric(horizontal: width * .04, vertical: 4),
+      elevation: 0.5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: InkWell(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => ChatScreen(user: widget.user)));
+          },
+          child: StreamBuilder(
+            stream: APIs.getLastMessage(widget.user),
+            builder: (context, snapshot) {
+              final data = snapshot.data?.docs;
+              final list =
+                  data?.map((e) => Message.fromJson(e.data())).toList() ?? [];
+              if (list.isNotEmpty) _message = list[0];
+
+              return ListTile(
+                leading: InkWell(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(height * .03),
+                    child: CachedNetworkImage(
+                      width: height * .055,
+                      height: height * .055,
+                      imageUrl: widget.user.image,
+                      errorWidget: (context, url, error) => const CircleAvatar(
+                          child: Icon(CupertinoIcons.person)),
                     ),
                   ),
                 ),
-              ],
-            ),
-            Expanded(
-              flex: 1,
-              child: RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: "Course Code   \n",
-                      style: TextStyle(
-                          color: primaryColor,
-                          fontSize: height * 0.02,
-                          fontWeight: FontWeight.bold),
-                    )
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+                title: Text(widget.user.name),
+                subtitle: Text(
+                    _message != null
+                        ? _message!.type == Type.image
+                            ? 'image'
+                            : _message!.msg
+                        : widget.user.about,
+                    maxLines: 1),
+                trailing: _message == null
+                    ? null
+                    : _message!.read.isEmpty &&
+                            _message!.fromId != APIs.user.uid
+                        ? Container(
+                            width: 15,
+                            height: 15,
+                            decoration: BoxDecoration(
+                                color: Colors.blueAccent.shade400,
+                                borderRadius: BorderRadius.circular(10)),
+                          )
+                        : Text(
+                            dateutils.getLastMessageTime(
+                                context: context, time: _message!.sent),
+                            style: const TextStyle(color: Colors.black54),
+                          ),
+              );
+            },
+          )),
     );
-    ;
   }
 }
