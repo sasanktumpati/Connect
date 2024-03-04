@@ -14,7 +14,7 @@ import '../models/chat_user.dart';
 import '../widgets/user_card.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({Key? key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -22,25 +22,23 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<ChatUser> _list = [];
-
   final List<ChatUser> _searchList = [];
-
   bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
-    APIs.getSelfInfo();
+    apiData.getSelfInfo();
 
     SystemChannels.lifecycle.setMessageHandler((message) {
       log('Message: $message');
 
-      if (APIs.auth.currentUser != null) {
+      if (apiData.auth.currentUser != null) {
         if (message.toString().contains('resume')) {
-          APIs.updateActiveStatus(true);
+          apiData.updateActiveStatus(true);
         }
         if (message.toString().contains('pause')) {
-          APIs.updateActiveStatus(false);
+          apiData.updateActiveStatus(false);
         }
       }
 
@@ -60,142 +58,142 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       //for hiding keyboard when a tap is detected on screen
       onTap: () => FocusScope.of(context).unfocus(),
-      child: WillPopScope(
-        //if search is on & back button is pressed then close search
-        //or else simple close current screen on back button click
-        onWillPop: () {
-          if (_isSearching) {
-            setState(() {
-              _isSearching = !_isSearching;
-            });
-            return Future.value(false);
-          } else {
-            return Future.value(true);
-          }
-        },
-        child: Scaffold(
-          //app bar
-          appBar: AppBar(
-            leading: const Icon(CupertinoIcons.home),
-            title: _isSearching
-                ? TextField(
-                    decoration: const InputDecoration(
-                        border: InputBorder.none, hintText: 'Name, Email, ...'),
-                    autofocus: true,
-                    style: const TextStyle(fontSize: 17, letterSpacing: 0.5),
-                    //when search text changes then updated search list
-                    onChanged: (val) {
-                      //search logic
-                      _searchList.clear();
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: backColor,
+          title: _isSearching
+              ? TextField(
+                  decoration: const InputDecoration(
+                      border: InputBorder.none, hintText: 'Name, Email, ...'),
+                  autofocus: true,
+                  style: const TextStyle(fontSize: 17, letterSpacing: 0.5),
+                  //when search text changes then updated search list
+                  onChanged: (val) {
+                    //search logic
+                    _searchList.clear();
 
-                      for (var i in _list) {
-                        if (i.name.toLowerCase().contains(val.toLowerCase()) ||
-                            i.email.toLowerCase().contains(val.toLowerCase())) {
-                          _searchList.add(i);
-                          setState(() {
-                            _searchList;
-                          });
-                        }
+                    for (var i in _list) {
+                      if (i.name.toLowerCase().contains(val.toLowerCase()) ||
+                          i.email.toLowerCase().contains(val.toLowerCase())) {
+                        _searchList.add(i);
+                        setState(() {
+                          _searchList;
+                        });
                       }
-                    },
-                  )
-                : const Text('Connect'),
-            actions: [
-              //search user button
-              IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _isSearching = !_isSearching;
-                    });
+                    }
                   },
-                  icon: Icon(_isSearching
-                      ? CupertinoIcons.clear_circled_solid
-                      : Icons.search)),
+                )
+              : const Text('Connect'),
+          actions: [
+            //search user button
+            IconButton(
+                onPressed: () {
+                  setState(() {
+                    _isSearching = !_isSearching;
+                  });
+                },
+                icon: Icon(_isSearching
+                    ? CupertinoIcons.clear_circled_solid
+                    : Icons.search)),
+          ],
+        ),
 
-              //more features button
+        //floating button to add new user
+        floatingActionButton: SizedBox(
+          width: 56,
+          height: 56,
+          child: FloatingActionButton(
+            onPressed: () => _addChatUserDialog(),
+            child: const Icon(Icons.person_add_alt),
+          ),
+        ),
+
+        //bottom navigation bar
+        bottomNavigationBar: BottomAppBar(
+          color: Colors.black,
+          surfaceTintColor: Colors.transparent,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
               IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => ProfileScreen(user: APIs.me)));
-                  },
-                  icon: const Icon(Icons.more_vert))
+                onPressed: () {},
+                icon: const Icon(Icons.home),
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => ProfileScreen(user: apiData.me)));
+                },
+                icon: const Icon(Icons.person),
+              ),
             ],
           ),
+        ),
 
-          //floating button to add new user
-          floatingActionButton: Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: FloatingActionButton(
-                onPressed: () {
-                  _addChatUserDialog();
-                },
-                child: const Icon(Icons.add_comment_rounded)),
-          ),
+        //body
+        body: StreamBuilder(
+          stream: apiData.getMyUsersId(),
 
-          //body
-          body: StreamBuilder(
-            stream: APIs.getMyUsersId(),
+          //get id of only known users
+          builder: (context, snapshot) {
+            switch (snapshot.connectionState) {
+              //if data is loading
+              case ConnectionState.waiting:
+              case ConnectionState.none:
+                return const Center(child: CircularProgressIndicator());
 
-            //get id of only known users
-            builder: (context, snapshot) {
-              switch (snapshot.connectionState) {
-                //if data is loading
-                case ConnectionState.waiting:
-                case ConnectionState.none:
-                  return const Center(child: CircularProgressIndicator());
+              //if some or all data is loaded then show it
+              case ConnectionState.active:
+              case ConnectionState.done:
+                return StreamBuilder(
+                  stream: apiData.getAllUsers(
+                      snapshot.data?.docs.map((e) => e.id).toList() ?? []),
 
-                //if some or all data is loaded then show it
-                case ConnectionState.active:
-                case ConnectionState.done:
-                  return StreamBuilder(
-                    stream: APIs.getAllUsers(
-                        snapshot.data?.docs.map((e) => e.id).toList() ?? []),
+                  //get only those user, who's ids are provided
+                  builder: (context, snapshot) {
+                    switch (snapshot.connectionState) {
+                      //if data is loading
+                      case ConnectionState.waiting:
+                      case ConnectionState.none:
+                      // return const Center(
+                      //     child: CircularProgressIndicator());
 
-                    //get only those user, who's ids are provided
-                    builder: (context, snapshot) {
-                      switch (snapshot.connectionState) {
-                        //if data is loading
-                        case ConnectionState.waiting:
-                        case ConnectionState.none:
-                        // return const Center(
-                        //     child: CircularProgressIndicator());
+                      //if some or all data is loaded then show it
+                      case ConnectionState.active:
+                      case ConnectionState.done:
+                        final data = snapshot.data?.docs;
+                        _list = data
+                                ?.map((e) => ChatUser.fromJson(e.data()))
+                                .toList() ??
+                            [];
 
-                        //if some or all data is loaded then show it
-                        case ConnectionState.active:
-                        case ConnectionState.done:
-                          final data = snapshot.data?.docs;
-                          _list = data
-                                  ?.map((e) => ChatUser.fromJson(e.data()))
-                                  .toList() ??
-                              [];
-
-                          if (_list.isNotEmpty) {
-                            return ListView.builder(
-                                itemCount: _isSearching
-                                    ? _searchList.length
-                                    : _list.length,
-                                padding: EdgeInsets.only(top: height * .01),
-                                physics: const BouncingScrollPhysics(),
-                                itemBuilder: (context, index) {
-                                  return UserCard(
-                                      user: _isSearching
-                                          ? _searchList[index]
-                                          : _list[index]);
-                                });
-                          } else {
-                            return const Center(
-                              child: Text('No Connections Found!',
-                                  style: TextStyle(fontSize: 20)),
-                            );
-                          }
-                      }
-                    },
-                  );
-              }
-            },
-          ),
+                        if (_list.isNotEmpty) {
+                          return ListView.builder(
+                              itemCount: _isSearching
+                                  ? _searchList.length
+                                  : _list.length,
+                              padding: EdgeInsets.only(top: height * .01),
+                              physics: const BouncingScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                return UserCard(
+                                    user: _isSearching
+                                        ? _searchList[index]
+                                        : _list[index]);
+                              });
+                        } else {
+                          return const Center(
+                            child: Text('No Connections Found!',
+                                style: TextStyle(fontSize: 20)),
+                          );
+                        }
+                    }
+                  },
+                );
+            }
+          },
         ),
       ),
     );
@@ -218,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Icon(
                     Icons.person_add,
-                    color: Colors.blue,
+                    color: Colors.white,
                     size: 28,
                   ),
                   Text('  Add User')
@@ -231,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onChanged: (value) => email = value,
                 decoration: InputDecoration(
                     hintText: 'Email Id',
-                    prefixIcon: const Icon(Icons.email, color: Colors.blue),
+                    prefixIcon: const Icon(Icons.email, color: Colors.white),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15))),
               ),
@@ -245,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.pop(context);
                     },
                     child: Text('Cancel',
-                        style: TextStyle(color: Colors.blue, fontSize: 16))),
+                        style: TextStyle(color: Colors.white, fontSize: 16))),
 
                 //add button
                 MaterialButton(
@@ -253,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       //hide alert dialog
                       Navigator.pop(context);
                       if (email.isNotEmpty) {
-                        await APIs.addChatUser(email).then((value) {
+                        await apiData.addChatUser(email).then((value) {
                           if (!value) {
                             CustomDialogs.alertDialog(
                                 context, 'User does not Exists!');
@@ -263,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     child: const Text(
                       'Add',
-                      style: TextStyle(color: Colors.blue, fontSize: 16),
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ))
               ],
             ));

@@ -27,7 +27,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   List<Message> _list = [];
   final _textController = TextEditingController();
-  bool _showEmoji = false, _isUploading = false;
+  bool _isUploading = false;
 
   get height => MediaQuery.of(context).size.height;
   get width => MediaQuery.of(context).size.height;
@@ -44,81 +44,59 @@ class _ChatScreenState extends State<ChatScreen> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: SafeArea(
-        // ignore: deprecated_member_use
-        child: WillPopScope(
-          onWillPop: () {
-            if (_showEmoji) {
-              setState(() => _showEmoji = !_showEmoji);
-              return Future.value(false);
-            } else {
-              return Future.value(true);
-            }
-          },
-          child: Scaffold(
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              flexibleSpace: _appBar(),
-            ),
-            backgroundColor: const Color.fromARGB(255, 234, 248, 255),
-            body: Column(
-              children: [
-                Expanded(
-                  child: StreamBuilder(
-                    stream: APIs.getAllMessages(widget.user),
-                    builder: (context, snapshot) {
-                      switch (snapshot.connectionState) {
-                        case ConnectionState.waiting:
-                        case ConnectionState.none:
-                          return const SizedBox();
-                        case ConnectionState.active:
-                        case ConnectionState.done:
-                          final data = snapshot.data?.docs;
-                          _list = data
-                                  ?.map((e) => Message.fromJson(e.data()))
-                                  .toList() ??
-                              [];
+        child: Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            flexibleSpace: _appBar(),
+            backgroundColor: Colors.black,
+          ),
+          backgroundColor: backColor,
+          body: Column(
+            children: [
+              Expanded(
+                child: StreamBuilder(
+                  stream: apiData.getAllMessages(widget.user),
+                  builder: (context, snapshot) {
+                    switch (snapshot.connectionState) {
+                      case ConnectionState.waiting:
+                      case ConnectionState.none:
+                        return const SizedBox();
+                      case ConnectionState.active:
+                      case ConnectionState.done:
+                        final data = snapshot.data?.docs;
+                        _list = data
+                                ?.map((e) => Message.fromJson(e.data()))
+                                .toList() ??
+                            [];
 
-                          if (_list.isNotEmpty) {
-                            return ListView.builder(
-                                reverse: true,
-                                itemCount: _list.length,
-                                padding: EdgeInsets.only(top: height * .01),
-                                physics: const BouncingScrollPhysics(),
-                                itemBuilder: (context, index) {
-                                  return MessageCard(message: _list[index]);
-                                });
-                          } else {
-                            return const Center(
-                              child: Text('Say Hi!',
-                                  style: TextStyle(fontSize: 20)),
-                            );
-                          }
-                      }
-                    },
-                  ),
+                        if (_list.isNotEmpty) {
+                          return ListView.builder(
+                              reverse: true,
+                              itemCount: _list.length,
+                              padding: EdgeInsets.only(top: height * .01),
+                              physics: const BouncingScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                return MessageCard(message: _list[index]);
+                              });
+                        } else {
+                          return const Center(
+                            child:
+                                Text('Say Hi!', style: TextStyle(fontSize: 20)),
+                          );
+                        }
+                    }
+                  },
                 ),
-                if (_isUploading)
-                  const Align(
-                      alignment: Alignment.centerRight,
-                      child: Padding(
-                          padding:
-                              EdgeInsets.symmetric(vertical: 8, horizontal: 20),
-                          child: CircularProgressIndicator(strokeWidth: 2))),
-                _chatInput(),
-                if (_showEmoji)
-                  SizedBox(
-                    height: height * .35,
-                    child: EmojiPicker(
-                      textEditingController: _textController,
-                      config: Config(
-                        bgColor: const Color.fromARGB(255, 234, 248, 255),
-                        columns: 8,
-                        emojiSizeMax: 32 * (Platform.isIOS ? 1.30 : 1.0),
-                      ),
-                    ),
-                  )
-              ],
-            ),
+              ),
+              if (_isUploading)
+                const Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+                        child: CircularProgressIndicator(strokeWidth: 2))),
+              _chatInput(),
+            ],
           ),
         ),
       ),
@@ -126,71 +104,77 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _appBar() {
-    return InkWell(
-        onTap: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => ViewProfileScreen(user: widget.user)));
-        },
-        child: StreamBuilder(
-            stream: APIs.getUserInfo(widget.user),
-            builder: (context, snapshot) {
-              final data = snapshot.data?.docs;
-              final list =
-                  data?.map((e) => ChatUser.fromJson(e.data())).toList() ?? [];
+    return Container(
+      color: Colors.black,
+      child: InkWell(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) =>
+                        ViewOthersProfileScreen(user: widget.user)));
+          },
+          child: StreamBuilder(
+              stream: apiData.getUserInfo(widget.user),
+              builder: (context, snapshot) {
+                final data = snapshot.data?.docs;
+                final list =
+                    data?.map((e) => ChatUser.fromJson(e.data())).toList() ??
+                        [];
 
-              return Row(
-                children: [
-                  IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon:
-                          const Icon(Icons.arrow_back, color: Colors.black54)),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(height * .03),
-                    child: CachedNetworkImage(
-                      width: height * .05,
-                      height: height * .05,
-                      imageUrl:
-                          list.isNotEmpty ? list[0].image : widget.user.image,
-                      errorWidget: (context, url, error) => const CircleAvatar(
-                          child: Icon(CupertinoIcons.person)),
+                return Row(
+                  children: [
+                    IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon:
+                            const Icon(Icons.arrow_back, color: Colors.white)),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(height * .03),
+                      child: CachedNetworkImage(
+                        width: height * .05,
+                        height: height * .05,
+                        imageUrl:
+                            list.isNotEmpty ? list[0].image : widget.user.image,
+                        errorWidget: (context, url, error) =>
+                            const CircleAvatar(
+                                child: Icon(CupertinoIcons.person)),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(list.isNotEmpty ? list[0].name : widget.user.name,
-                          style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 2),
-                      Text(
-                          list.isNotEmpty
-                              ? list[0].isOnline
-                                  ? 'Online'
-                                  : dateutils.getLastActiveTime(
-                                      context: context,
-                                      lastActive: list[0].lastActive)
-                              : dateutils.getLastActiveTime(
-                                  context: context,
-                                  lastActive: widget.user.lastActive),
-                          style: const TextStyle(
-                              fontSize: 13, color: Colors.black54)),
-                    ],
-                  )
-                ],
-              );
-            }));
+                    const SizedBox(width: 10),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(list.isNotEmpty ? list[0].name : widget.user.name,
+                            style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500)),
+                        const SizedBox(height: 2),
+                        Text(
+                            list.isNotEmpty
+                                ? list[0].isOnline
+                                    ? 'Online'
+                                    : dateutils.getLastActiveTime(
+                                        context: context,
+                                        lastActive: list[0].lastActive)
+                                : dateutils.getLastActiveTime(
+                                    context: context,
+                                    lastActive: widget.user.lastActive),
+                            style: const TextStyle(
+                                fontSize: 13, color: Colors.white)),
+                      ],
+                    )
+                  ],
+                );
+              })),
+    );
   }
 
   Widget _chatInput() {
     return Padding(
-      padding: EdgeInsets.symmetric(
-          vertical: height * .01, horizontal: width * .025),
+      padding:
+          EdgeInsets.symmetric(vertical: height * .01, horizontal: width * .02),
       child: Row(
         children: [
           Expanded(
@@ -199,24 +183,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   borderRadius: BorderRadius.circular(15)),
               child: Row(
                 children: [
-                  IconButton(
-                      onPressed: () {
-                        FocusScope.of(context).unfocus();
-                        setState(() => _showEmoji = !_showEmoji);
-                      },
-                      icon: const Icon(Icons.emoji_emotions,
-                          color: Colors.blueAccent, size: 25)),
                   Expanded(
                       child: TextField(
                     controller: _textController,
                     keyboardType: TextInputType.multiline,
                     maxLines: null,
-                    onTap: () {
-                      if (_showEmoji) setState(() => _showEmoji = !_showEmoji);
-                    },
                     decoration: const InputDecoration(
-                        hintText: 'Connect Here......',
-                        hintStyle: TextStyle(color: Colors.blueAccent),
+                        hintText: '   Say Something...',
+                        hintStyle: TextStyle(color: Colors.white54),
                         border: InputBorder.none),
                   )),
                   IconButton(
@@ -228,12 +202,13 @@ class _ChatScreenState extends State<ChatScreen> {
                         for (var i in images) {
                           log('Image Path: ${i.path}');
                           setState(() => _isUploading = true);
-                          await APIs.sendChatImage(widget.user, File(i.path));
+                          await apiData.sendChatImage(
+                              widget.user, File(i.path));
                           setState(() => _isUploading = false);
                         }
                       },
                       icon: const Icon(Icons.image,
-                          color: Colors.blueAccent, size: 26)),
+                          color: Colors.white54, size: 26)),
                   IconButton(
                       onPressed: () async {
                         final ImagePicker picker = ImagePicker();
@@ -242,13 +217,13 @@ class _ChatScreenState extends State<ChatScreen> {
                         if (image != null) {
                           log('Image Path: ${image.path}');
                           setState(() => _isUploading = true);
-                          await APIs.sendChatImage(
+                          await apiData.sendChatImage(
                               widget.user, File(image.path));
                           setState(() => _isUploading = false);
                         }
                       },
                       icon: const Icon(Icons.camera_alt_rounded,
-                          color: Colors.blueAccent, size: 26)),
+                          color: Colors.white54, size: 26)),
                   SizedBox(width: width * .02),
                 ],
               ),
@@ -258,10 +233,10 @@ class _ChatScreenState extends State<ChatScreen> {
             onPressed: () {
               if (_textController.text.isNotEmpty) {
                 if (_list.isEmpty) {
-                  APIs.sendFirstMessage(
+                  apiData.sendFirstMessage(
                       widget.user, _textController.text, Type.text);
                 } else {
-                  APIs.sendMessage(
+                  apiData.sendMessage(
                       widget.user, _textController.text, Type.text);
                 }
                 _textController.text = '';
@@ -271,7 +246,7 @@ class _ChatScreenState extends State<ChatScreen> {
             padding:
                 const EdgeInsets.only(top: 10, bottom: 10, right: 5, left: 10),
             shape: const CircleBorder(),
-            color: Colors.green,
+            color: Colors.black54,
             child: const Icon(Icons.send, color: Colors.white, size: 28),
           )
         ],

@@ -9,9 +9,11 @@ import '../models/message.dart';
 import '../screens/chat_screen.dart';
 
 class UserCard extends StatefulWidget {
-  UserCard({super.key, required ChatUser user});
-
   late final ChatUser user;
+
+  UserCard({Key? key, required ChatUser user}) : super(key: key) {
+    this.user = user;
+  }
 
   @override
   State<UserCard> createState() => _UserCardState();
@@ -41,7 +43,7 @@ class _UserCardState extends State<UserCard> {
                     builder: (_) => ChatScreen(user: widget.user)));
           },
           child: StreamBuilder(
-            stream: APIs.getLastMessage(widget.user),
+            stream: apiData.getLastMessage(widget.user),
             builder: (context, snapshot) {
               final data = snapshot.data?.docs;
               final list =
@@ -63,16 +65,18 @@ class _UserCardState extends State<UserCard> {
                 ),
                 title: Text(widget.user.name),
                 subtitle: Text(
-                    _message != null
-                        ? _message!.type == Type.image
-                            ? 'image'
-                            : _message!.msg
-                        : widget.user.about,
-                    maxLines: 1),
+                  _message != null
+                      ? _message!.type == Type.image
+                          ? 'image'
+                          : _message!.msg
+                      : widget.user.about,
+                  maxLines: 1,
+                  style: const TextStyle(color: Colors.white60),
+                ),
                 trailing: _message == null
                     ? null
                     : _message!.read.isEmpty &&
-                            _message!.fromId != APIs.user.uid
+                            _message!.fromId != apiData.user.uid
                         ? Container(
                             width: 15,
                             height: 15,
@@ -83,7 +87,7 @@ class _UserCardState extends State<UserCard> {
                         : Text(
                             dateutils.getLastMessageTime(
                                 context: context, time: _message!.sent),
-                            style: const TextStyle(color: Colors.black54),
+                            style: const TextStyle(color: Colors.white54),
                           ),
               );
             },

@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:connect/api/api.dart';
 import 'package:connect/helpers/dialogs.dart';
 import 'package:connect/screens/home.dart';
 import 'package:connect/services/connectivity_check.dart';
@@ -33,17 +34,31 @@ class _LoginScreenState extends State<LoginScreen> {
     CustomDialogs.showCircularProgressDialog(context);
 
     if (_connected) {
-      signInWithGoogle().then((User) {
+      signInWithGoogle().then((User) async {
         Navigator.pop(context);
         if (kDebugMode) {
           print(User);
         }
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => HomeScreen()));
+        if (User != null) {
+          if ((await apiData.userExists())) {
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+          } else {
+            await apiData.createUser().then((value) {
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (_) => const HomeScreen()));
+            }).catchError((error) {
+              CustomDialogs.alertDialog(context, "Error creating user: $error");
+            });
+          }
+        }
+      }).catchError((error) {
+        CustomDialogs.alertDialog(
+            context, "Error signing in with Google: $error");
       });
     } else {
       Navigator.pop(context);
-      CustomDialogs.alertDialog(context, 'Error');
+      CustomDialogs.alertDialog(context, 'No Internet Connection');
     }
   }
 

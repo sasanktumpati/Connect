@@ -11,7 +11,7 @@ import 'package:http/http.dart';
 import '../models/chat_user.dart';
 import '../models/message.dart';
 
-class APIs {
+class apiData {
   static FirebaseAuth auth = FirebaseAuth.instance;
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
   static FirebaseStorage storage = FirebaseStorage.instance;
@@ -29,12 +29,12 @@ class APIs {
 
   static User get user => auth.currentUser!;
 
-  static FirebaseMessaging fMessaging = FirebaseMessaging.instance;
+  static FirebaseMessaging cfsMsg = FirebaseMessaging.instance;
 
-  static Future<void> getFirebaseMessagingToken() async {
-    await fMessaging.requestPermission();
+  static Future<void> getFMToken() async {
+    await cfsMsg.requestPermission();
 
-    await fMessaging.getToken().then((t) {
+    await cfsMsg.getToken().then((t) {
       if (t != null) {
         me.pushToken = t;
         log('Push Token: $t');
@@ -58,7 +58,7 @@ class APIs {
           headers: {
             HttpHeaders.contentTypeHeader: 'application/json',
             HttpHeaders.authorizationHeader:
-                'key=AAAAQ0Bf7ZA:APA91bGd5IN5v43yedFDo86WiSuyTERjmlr4tyekbw_YW6JrdLFblZcbHdgjDmogWLJ7VD65KGgVbETS0Px7LnKk8NdAz4Z-AsHRp9WoVfArA5cNpfMKcjh_MQI-z96XQk5oIDUwx8D1'
+                'key=AAAAvQ4emfU:APA91bF8ehEa5fHoW2mc0zwlVZ_VS1xYf29_59xaXFyTL1gRqZlIxwyt_EmB_TxYJNNtvzXdZ8Y5our7TiZAmDF6Rtfw4b3jnbkEpWFj5-KtOGJO2Quv7AxFTd_h2NqRLsbayyZwrC79'
           },
           body: jsonEncode(body));
       log('Response status: ${res.statusCode}');
@@ -100,8 +100,8 @@ class APIs {
     await firestore.collection('users').doc(user.uid).get().then((user) async {
       if (user.exists) {
         me = ChatUser.fromJson(user.data()!);
-        await getFirebaseMessagingToken();
-        APIs.updateActiveStatus(true);
+        await getFMToken();
+        apiData.updateActiveStatus(true);
         log('My Data: ${user.data()}');
       } else {
         await createUser().then((value) => getSelfInfo());
@@ -168,7 +168,7 @@ class APIs {
     final ext = file.path.split('.').last;
     log('Extension: $ext');
 
-    final ref = storage.ref().child('profile_pictures/${user.uid}.$ext');
+    final ref = storage.ref().child('profilepictures/${user.uid}.$ext');
 
     await ref
         .putFile(file, SettableMetadata(contentType: 'image/$ext'))

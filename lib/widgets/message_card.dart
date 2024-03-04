@@ -32,17 +32,17 @@ class _MessageCardState extends State<MessageCard> {
     final backColor = Theme.of(context).colorScheme.background;
     final primaryColor = Theme.of(context).colorScheme.primary;
     final secColor = Theme.of(context).colorScheme.secondary;
-    bool isMe = APIs.user.uid == widget.message.fromId;
+    bool isMe = apiData.user.uid == widget.message.fromId;
     return InkWell(
         onLongPress: () {
           _showBottomSheet(isMe);
         },
-        child: isMe ? _greenMessage() : _blueMessage());
+        child: isMe ? _sentMessage() : _recievedMessage());
   }
 
-  Widget _blueMessage() {
+  Widget _recievedMessage() {
     if (widget.message.read.isEmpty) {
-      APIs.updateMessageReadStatus(widget.message);
+      apiData.updateMessageReadStatus(widget.message);
     }
 
     return Row(
@@ -51,20 +51,19 @@ class _MessageCardState extends State<MessageCard> {
         Flexible(
           child: Container(
             padding: EdgeInsets.all(
-                widget.message.type == Type.image ? width * .03 : width * .04),
+                widget.message.type == Type.image ? width * .03 : width * .01),
             margin: EdgeInsets.symmetric(
-                horizontal: width * .04, vertical: height * .01),
+                horizontal: width * .01, vertical: height * .01),
             decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 221, 245, 255),
-                border: Border.all(color: Colors.lightBlue),
+                color: Colors.blueAccent,
                 borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
-                    bottomRight: Radius.circular(30))),
+                    topLeft: Radius.circular(25),
+                    topRight: Radius.circular(25),
+                    bottomRight: Radius.circular(25))),
             child: widget.message.type == Type.text
                 ? Text(
                     widget.message.msg,
-                    style: const TextStyle(fontSize: 15, color: Colors.black87),
+                    style: const TextStyle(fontSize: 15, color: Colors.white),
                   )
                 : ClipRRect(
                     borderRadius: BorderRadius.circular(15),
@@ -85,14 +84,14 @@ class _MessageCardState extends State<MessageCard> {
           child: Text(
             dateutils.getFormattedTime(
                 context: context, time: widget.message.sent),
-            style: const TextStyle(fontSize: 13, color: Colors.black54),
+            style: const TextStyle(fontSize: 13, color: Colors.white),
           ),
         ),
       ],
     );
   }
 
-  Widget _greenMessage() {
+  Widget _sentMessage() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -105,27 +104,26 @@ class _MessageCardState extends State<MessageCard> {
             Text(
               dateutils.getFormattedTime(
                   context: context, time: widget.message.sent),
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
+              style: const TextStyle(fontSize: 13, color: Colors.white),
             ),
           ],
         ),
         Flexible(
           child: Container(
             padding: EdgeInsets.all(
-                widget.message.type == Type.image ? width * .03 : width * .04),
+                widget.message.type == Type.image ? width * .03 : width * .01),
             margin: EdgeInsets.symmetric(
-                horizontal: width * .04, vertical: height * .01),
+                horizontal: width * .01, vertical: height * .01),
             decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 218, 255, 176),
-                border: Border.all(color: Colors.lightGreen),
+                color: Colors.blueAccent,
                 borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
-                    bottomLeft: Radius.circular(30))),
+                    topLeft: Radius.circular(25),
+                    topRight: Radius.circular(25),
+                    bottomRight: Radius.circular(25))),
             child: widget.message.type == Type.text
                 ? Text(
                     widget.message.msg,
-                    style: const TextStyle(fontSize: 15, color: Colors.black87),
+                    style: const TextStyle(fontSize: 15, color: Colors.white),
                   )
                 : ClipRRect(
                     borderRadius: BorderRadius.circular(15),
@@ -147,10 +145,11 @@ class _MessageCardState extends State<MessageCard> {
 
   void _showBottomSheet(bool isMe) {
     showModalBottomSheet(
+        backgroundColor: Colors.black,
         context: context,
         shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20), topRight: Radius.circular(20))),
+                topLeft: Radius.circular(30), topRight: Radius.circular(30))),
         builder: (_) {
           return ListView(
             shrinkWrap: true,
@@ -173,7 +172,7 @@ class _MessageCardState extends State<MessageCard> {
                             .then((value) {
                           Navigator.pop(context);
 
-                          CustomDialogs.showSnackbar(context, 'Text Copied!');
+                          CustomDialogs.showSnackbar(context, 'Copied Text!');
                         });
                       })
                   : _OptionItem(
@@ -184,12 +183,12 @@ class _MessageCardState extends State<MessageCard> {
                         try {
                           log('Image Url: ${widget.message.msg}');
                           await GallerySaver.saveImage(widget.message.msg,
-                                  albumName: 'We Chat')
+                                  albumName: 'Connect')
                               .then((success) {
                             Navigator.pop(context);
                             if (success != null && success) {
                               CustomDialogs.showSnackbar(
-                                  context, 'Image Successfully Saved!');
+                                  context, 'Image Saved!');
                             }
                           });
                         } catch (e) {
@@ -198,7 +197,7 @@ class _MessageCardState extends State<MessageCard> {
                       }),
               if (isMe)
                 Divider(
-                  color: Colors.black54,
+                  color: Colors.white54,
                   endIndent: width * .04,
                   indent: width * .04,
                 ),
@@ -217,22 +216,22 @@ class _MessageCardState extends State<MessageCard> {
                         color: Colors.red, size: 26),
                     name: 'Delete Message',
                     onTap: () async {
-                      await APIs.deleteMessage(widget.message).then((value) {
+                      await apiData.deleteMessage(widget.message).then((value) {
                         Navigator.pop(context);
                       });
                     }),
               Divider(
-                color: Colors.black54,
+                color: Colors.white54,
                 endIndent: width * .04,
                 indent: width * .04,
               ),
               _OptionItem(
-                  icon: const Icon(Icons.remove_red_eye, color: Colors.blue),
+                  icon: const Icon(Icons.send, color: Colors.blue),
                   name:
                       'Sent At: ${dateutils.getMessageTime(context: context, time: widget.message.sent)}',
                   onTap: () {}),
               _OptionItem(
-                  icon: const Icon(Icons.remove_red_eye, color: Colors.green),
+                  icon: const Icon(Icons.remove_red_eye, color: Colors.blue),
                   name: widget.message.read.isEmpty
                       ? 'Read At: Not seen yet'
                       : 'Read At: ${dateutils.getMessageTime(context: context, time: widget.message.read)}',
@@ -248,6 +247,7 @@ class _MessageCardState extends State<MessageCard> {
     showDialog(
         context: context,
         builder: (_) => AlertDialog(
+              backgroundColor: Colors.black,
               contentPadding: const EdgeInsets.only(
                   left: 24, right: 24, top: 20, bottom: 10),
               shape: RoundedRectangleBorder(
@@ -277,12 +277,12 @@ class _MessageCardState extends State<MessageCard> {
                     },
                     child: const Text(
                       'Cancel',
-                      style: TextStyle(color: Colors.blue, fontSize: 16),
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     )),
                 MaterialButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      APIs.updateMessage(widget.message, updatedMsg);
+                      apiData.updateMessage(widget.message, updatedMsg);
                     },
                     child: const Text(
                       'Update',
@@ -320,7 +320,7 @@ class _OptionItem extends StatelessWidget {
                 child: Text('    $name',
                     style: const TextStyle(
                         fontSize: 15,
-                        color: Colors.black54,
+                        color: Colors.white70,
                         letterSpacing: 0.5)))
           ]),
         ));
