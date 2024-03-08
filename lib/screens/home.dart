@@ -1,11 +1,8 @@
-// ignore_for_file: deprecated_member_use
-
 import 'dart:developer';
 
 import 'package:connect/api/api.dart';
 import 'package:connect/helpers/dialogs.dart';
 import 'package:connect/screens/profile.dart';
-import 'package:connect/screens/viewprofile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -56,7 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final secColor = Theme.of(context).colorScheme.secondary;
 
     return GestureDetector(
-      //for hiding keyboard when a tap is detected on screen
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -68,9 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       border: InputBorder.none, hintText: 'Name, Email, ...'),
                   autofocus: true,
                   style: const TextStyle(fontSize: 17, letterSpacing: 0.5),
-                  //when search text changes then updated search list
                   onChanged: (val) {
-                    //search logic
                     _searchList.clear();
 
                     for (var i in _list) {
@@ -86,7 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 )
               : const Text('Connect'),
           actions: [
-            //search user button
             IconButton(
                 onPressed: () {
                   setState(() {
@@ -98,8 +91,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     : Icons.search)),
           ],
         ),
-
-        //floating button to add new user
         floatingActionButton: SizedBox(
           width: 56,
           height: 56,
@@ -108,8 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Icon(Icons.person_add_alt),
           ),
         ),
-
-        //bottom navigation bar
         bottomNavigationBar: BottomAppBar(
           color: Colors.black,
           surfaceTintColor: Colors.transparent,
@@ -132,36 +121,23 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-
-        //body
         body: StreamBuilder(
           stream: apiData.getMyUsersId(),
-
-          //get id of only known users
           builder: (context, snapshot) {
             switch (snapshot.connectionState) {
-              //if data is loading
               case ConnectionState.waiting:
               case ConnectionState.none:
                 return const Center(child: CircularProgressIndicator());
 
-              //if some or all data is loaded then show it
               case ConnectionState.active:
               case ConnectionState.done:
                 return StreamBuilder(
                   stream: apiData.getAllUsers(
                       snapshot.data?.docs.map((e) => e.id).toList() ?? []),
-
-                  //get only those user, who's ids are provided
                   builder: (context, snapshot) {
                     switch (snapshot.connectionState) {
-                      //if data is loading
                       case ConnectionState.waiting:
                       case ConnectionState.none:
-                      // return const Center(
-                      //     child: CircularProgressIndicator());
-
-                      //if some or all data is loaded then show it
                       case ConnectionState.active:
                       case ConnectionState.done:
                         final data = snapshot.data?.docs;
@@ -207,13 +183,10 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => AlertDialog(
               contentPadding: const EdgeInsets.only(
                   left: 24, right: 24, top: 20, bottom: 10),
-
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
-
-              //title
               title: Row(
-                children: [
+                children: const [
                   Icon(
                     Icons.person_add,
                     color: Colors.white,
@@ -222,8 +195,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text('  Add User')
                 ],
               ),
-
-              //content
               content: TextFormField(
                 maxLines: null,
                 onChanged: (value) => email = value,
@@ -233,22 +204,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15))),
               ),
-
-              //actions
               actions: [
-                //cancel button
                 MaterialButton(
                     onPressed: () {
-                      //hide alert dialog
                       Navigator.pop(context);
                     },
                     child: Text('Cancel',
                         style: TextStyle(color: Colors.white, fontSize: 16))),
-
-                //add button
                 MaterialButton(
                     onPressed: () async {
-                      //hide alert dialog
                       Navigator.pop(context);
                       if (email.isNotEmpty) {
                         await apiData.addChatUser(email).then((value) {
